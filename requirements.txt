@@ -1,0 +1,24 @@
+# Core Data & API
+pandas
+numpy
+requests
+python-dotenv
+
+# Plotting & Visualization
+plotly
+matplotlib
+
+# Jupyter / Notebook Support
+jupyter
+nbformat
+ipykernel
+
+# Snowflake & Snowpark
+snowflake-snowpark-python[pandas]
+snowflake-connector-python
+
+# Streamlit
+streamlit
+
+# Optional utilities
+pydeck
