@@ -22,6 +22,9 @@ Data-driven awareness in a location as extreme as Nazaré can help **protect liv
 **Nazaré's waves reaching 20–30 meters pose significant risks to surfers, fishermen, and rescue teams.
 This dashboard provides live monitoring, pattern insights, hazard detection, and 24-hour forecasting.**
 
+![Nazare_portugal_1](screenshots/Nazare%20portugal%201.png)
+![Nazare_portugal_2](screenshots/Nazare_portugal_2.png)
+
 ___
 
 This project implements a full big data pipeline using:
