@@ -23,7 +23,7 @@ Data-driven awareness in a location as extreme as Nazaré can help **protect liv
 This dashboard provides live monitoring, pattern insights, hazard detection, and 24-hour forecasting.**
 
 ![Nazare_portugal_1](screenshots/Nazare%20portugal%201.png)
-![Nazare_portugal_2](screenshots/Nazare_portugal_2.png)
+![nazare-surfs](screenshots/nazare-surfs.jpg)
 
 ___
 
