@@ -11,7 +11,7 @@ This project implements a full big data pipeline using:
 
 **Machine learning forecasting**
 
-The system monitors real-time marine conditions at**Nazaré, Portugal**, one of the most dangerous big-wave zones on the planet.
+The system monitors real-time marine conditions at **Nazaré, Portugal**, one of the most dangerous big-wave zones on the planet.
 
 ## 📍 Coordinates Monitored:
 
@@ -19,18 +19,20 @@ The system monitors real-time marine conditions at**Nazaré, Portugal**, one of 
 
 **Longitude: -9.085443**
 
-Nazaré's waves—reaching 20–30 meters—pose significant risks to surfers, fishermen, and rescue teams.
-This dashboard provides live monitoring, pattern insights, hazard detection, and 24-hour forecasting.
+Nazaré's waves reaching 20–30 meters pose significant risks to surfers, fishermen, and rescue teams.
+This dashboard provides live monitoring, pattern insights, hazard detection, and 24 hour forecasting.
 
 
 # ⚙️ Setup Instructions
 
 ## 1️⃣ Clone the repo
-git clone <repo-url>
+```git clone <repo-url>
 cd <repo-folder>
+```
 
 ## 2️⃣ Create .env
 
+```
 STORMGLASS_API_KEY=your_api_key
 SNOW_ACCOUNT=xxxxxx-xx
 SNOW_USER=username
@@ -39,16 +41,22 @@ SNOW_ROLE=SYSADMIN
 SNOW_WAREHOUSE=COMPUTE_WH
 SNOW_DATABASE=MARINE_DB
 SNOW_SCHEMA=NAZARE_SCHEMA
+```
 
 ## 3️⃣ Install dependencies
+```
 pip install -r requirements.txt
+```
 
 ## 4️⃣ Run the ingestion job
+```
 python ingest_marine.py
+```
 
 ## 5️⃣ Run dashboard locally
+```
 streamlit run nazare-wave-dashboard.py
-
+```
 
 
 ## 🔍 Notebook Analysis 
@@ -87,6 +95,7 @@ Normalized time index
 
 **Query #1 — Daily Wave Summary**
 
+```sql
 SELECT
     TO_DATE(TIMESTAMP) AS DAY,
     AVG(WAVE_HEIGHT) AS AVG_WAVE_HEIGHT,
@@ -96,11 +105,13 @@ SELECT
 FROM STORM_MARINE_CLEAN
 GROUP BY DAY
 ORDER BY DAY DESC;
+```
 
-(screenshots/SQL_Query_1.png)
+![SQL Query 1](screenshots/SQL_Query_1.png)
 
 **Query #2 — Dangerous Wave Detection**
 
+```sql
 SELECT
     COUNT(*) AS DANGEROUS_WAVE_COUNT,
     MIN(WAVE_HEIGHT) AS MIN_DANGER,
@@ -111,30 +122,33 @@ FROM STORM_MARINE_CLEAN
 WHERE WAVE_HEIGHT > 6.0
 GROUP BY DAY
 ORDER BY DAY DESC;
+```
 
-(screenshots/SQL_Query_2.png)
+![SQL Query 2](screenshots/SQL_Query_2.png)
 
-## Query 3 — Correlation Analysis
+**Query #3 — Correlation Analysis**
 
+```sql
 SELECT
     CORR(WAVE_HEIGHT, WIND_SPEED) AS CORR_WAVE_WIND,
     CORR(WAVE_HEIGHT, SWELL_HEIGHT) AS CORR_WAVE_SWELL
 FROM STORM_MARINE_CLEAN;
+```
 
-(screenshots/SQL_Query_3.png)
+![SQL Query 3](screenshots/SQL_Query_3.png)
 
 ## 📊 Dashboard Features (Streamlit in Snowflake)
 
-**Date Selector**
-**Time Selector**
-**Danger Threshold Slider**
-**Summary KPIs**
-**Interactive Wave Map**
-**Wave Height Gauge Meter**
-**Time-Series Charts**
-**Scatter Insights**
-**Hourly Pattern Chart**
-**24-Hour Forecast Model (Machine Learning)**
+Date Selector
+Time Selector
+Danger Threshold Slider
+Summary KPIs
+Interactive Wave Map
+Wave Height Gauge Meter
+Time-Series Charts
+Scatter Insights
+Hourly Pattern Chart
+24-Hour Forecast Model (Machine Learning)
 
 🤖 Machine Learning Forecasting Component
 
@@ -157,8 +171,8 @@ Display: Combined history + forecast chart
 
 ## 🌊 Wave Map & Gauge Meter
 
-![Wave Map] (screenshots/Wave%20Map.png)
-![Gauge Meter] (screenshots/Gauge%20Meter.png)
+![Wave Map](screenshots/Wave%20Map.png)
+![Gauge Meter](screenshots/Gauge%20Meter.png)
 
 ## 📈 Forecast Chart
 
@@ -168,49 +182,49 @@ Display: Combined history + forecast chart
 
 ![Time Series](screenshots/Time%20Series.png)
 
-## 🧪 SQL + Notebook Insights
+## 🧪 Notebook Insights
 
-![SQL Query Results](screenshots/SQL_Query_1.png)
-
-
-![Notebook Insights]
-
-(screenshots/newplot.png) 
-(screenshots/Distribution_of_wave_height.png)
-(screenshots/windspeedvswaveheight.png)
-(screenshots/dailyavgandmaxwavaeheight.png)
+![Wave height time series](screenshots/newplot.png) 
+![Wave height distribution](screenshots/Distribution_of_wave_height.png)
+![Wind vs wave relationship](screenshots/windspeedvswaveheight.png)
+![Daily average and maximum wave height](screenshots/dailyavgandmaxwavaeheight.png)
 
 
 ## 🌊 Why Nazaré Matters
 
-Nazaré's waves are amplified by the deep Nazaré Canyon, creating sudden, extreme wave heights that threaten:
+Nazaré’s giant waves—powered by the deep **Nazaré Canyon**—can suddenly surge above **20–30 meters**, creating some of the most dangerous marine conditions in the world. These waves threaten:
 
-Surfers
+- **Surfers**
+- **Rescue teams**
+- **Fishermen**
+- **Tourists along the coastline**
 
-Coastal safety teams
+This dashboard helps improve safety by providing:
 
-Fishermen
+- **Real-time wave monitoring**
+- **Danger alerts**
+- **Environmental insights** (wind, swell, water temperature)
+- **24-hour wave forecasting**
 
-Tourists
+Data-driven awareness in a location as extreme as Nazaré can help **protect lives** and support rapid decision-making.
 
-Your dashboard helps:
+---
 
-Detect dangerous waves
+## 🎯 Conclusion
 
-Understand environmental patterns
+This project demonstrates how combining API data, Snowflake, and machine learning can deliver:
 
-Forecast upcoming risks
+- A **live marine data pipeline**
+- An interactive **Streamlit dashboard**
+- **Analytical SQL insights**
+- A simple but effective **forecasting model**
 
-Support early warning and rescue decisions
+The result is a practical tool that enhances understanding of Nazaré’s hazardous conditions and showcases the power of modern cloud analytics.
 
-Real-time analytics in locations like Nazaré can save lives.
+## 🙏 Acknowledgments
 
+This project was made possible with:
 
-
-🙏 Acknowledgments
-
-StormGlass.io (Marine Weather API)
-
-Snowflake (Streamlit + Snowpark)
-
+- **StormGlass.io** for real-time marine weather data  
+- **Snowflake** for data storage, Snowpark processing, and Streamlit deployment  
 
