@@ -1,5 +1,28 @@
-# 🌊 Nazaré Marine Analytics Dashboard
+# 🌊 Nazaré Big-Wave Risk & Forecasting Dashboard
 **Real-time Marine Data • Snowflake • StormGlass API • Streamlit • Forecasting**
+
+## 🌊 Why Nazaré Matters
+
+Nazaré’s giant waves—powered by the deep **Nazaré Canyon**—can suddenly surge above **20–30 meters**, creating some of the most dangerous marine conditions in the world. These waves threaten:
+
+- **Surfers**
+- **Rescue teams**
+- **Fishermen**
+- **Tourists along the coastline**
+
+This dashboard helps improve safety by providing:
+
+- **Real-time wave monitoring**
+- **Danger alerts**
+- **Environmental insights** (wind, swell, water temperature)
+- **24-hour wave forecasting**
+
+Data-driven awareness in a location as extreme as Nazaré can help **protect lives** and support rapid decision-making.
+
+**Nazaré's waves reaching 20–30 meters pose significant risks to surfers, fishermen, and rescue teams.
+This dashboard provides live monitoring, pattern insights, hazard detection, and 24-hour forecasting.**
+
+___
 
 This project implements a full big data pipeline using:
 
@@ -18,9 +41,6 @@ The system monitors real-time marine conditions at **Nazaré, Portugal**, one of
 **Latitude: 39.60475**
 
 **Longitude: -9.085443**
-
-Nazaré's waves reaching 20–30 meters pose significant risks to surfers, fishermen, and rescue teams.
-This dashboard provides live monitoring, pattern insights, hazard detection, and 24 hour forecasting.
 
 
 # ⚙️ Setup Instructions
@@ -139,30 +159,31 @@ FROM STORM_MARINE_CLEAN;
 
 ## 📊 Dashboard Features (Streamlit in Snowflake)
 
-Date Selector
-Time Selector
-Danger Threshold Slider
-Summary KPIs
-Interactive Wave Map
-Wave Height Gauge Meter
-Time-Series Charts
-Scatter Insights
-Hourly Pattern Chart
-24-Hour Forecast Model (Machine Learning)
+The dashboard includes:
 
-🤖 Machine Learning Forecasting Component
+- **Date Selector** – choose which day to analyse  
+- **Time Selector** – focus on all times or a specific hour  
+- **Danger Threshold Slider** – define what “dangerous” waves mean (e.g. > 6m)  
+- **Summary KPIs** – average / max wave height, wind, swell, dangerous wave count  
+- **Interactive Wave Map** – location-based view of conditions at Nazaré  
+- **Wave Height Gauge Meter** – visual indicator of max wave vs danger threshold  
+- **Time-Series Charts** – wave, swell, wind, and temperature over time  
+- **Scatter Insights** – relationships between wind/swell and wave height  
+- **Hourly Pattern Chart** – average wave height by hour of the day  
+- **24-Hour Forecast Model (Machine Learning)** – predicts upcoming wave heights  
 
-Uses NumPy linear regression (polyfit) to forecast wave height for the next 24 hours.
+---
 
-Model components:
+## 🤖 Machine Learning Forecasting Component
 
-Input: last 3 days of hourly wave heights
+The forecasting component uses **NumPy linear regression (`polyfit`)** to estimate the next 24 hours of wave height.
 
-Output: predicted next 24 hours
+**Model components:**
 
-Confidence Interval: 95%
-
-Display: Combined history + forecast chart
+- **Input:** last 3 days of hourly wave heights  
+- **Output:** predicted wave height for the next 24 hours  
+- **Confidence Interval:** approximate 95% band around the forecast  
+- **Display:** combined history + forecast chart, with the forecast clearly highlighted
 
 
 ## 📍 Dashboard Overview
@@ -190,23 +211,6 @@ Display: Combined history + forecast chart
 ![Daily average and maximum wave height](screenshots/dailyavgandmaxwavaeheight.png)
 
 
-## 🌊 Why Nazaré Matters
-
-Nazaré’s giant waves—powered by the deep **Nazaré Canyon**—can suddenly surge above **20–30 meters**, creating some of the most dangerous marine conditions in the world. These waves threaten:
-
-- **Surfers**
-- **Rescue teams**
-- **Fishermen**
-- **Tourists along the coastline**
-
-This dashboard helps improve safety by providing:
-
-- **Real-time wave monitoring**
-- **Danger alerts**
-- **Environmental insights** (wind, swell, water temperature)
-- **24-hour wave forecasting**
-
-Data-driven awareness in a location as extreme as Nazaré can help **protect lives** and support rapid decision-making.
 
 ---
 
