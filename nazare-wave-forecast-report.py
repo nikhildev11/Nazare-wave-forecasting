@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import date
 from snowflake.snowpark.context import get_active_session
 
@@ -57,6 +59,20 @@ def load_data_for_date(day: date) -> pd.DataFrame:
     """
     return session.sql(query).to_pandas()
 
+
+@st.cache_data(ttl=300)
+def load_recent_history(days: int = 3) -> pd.DataFrame:
+    """Load recent history (last N days) for forecasting."""
+    query = f"""
+        WITH MAX_TS AS (
+          SELECT MAX(TIMESTAMP) AS MAX_T FROM STORM_MARINE_CLEAN
+        )
+        SELECT c.TIMESTAMP, c.WAVE_HEIGHT
+        FROM STORM_MARINE_CLEAN c, MAX_TS m
+        WHERE c.TIMESTAMP >= DATEADD('day', -{days}, m.MAX_T)
+        ORDER BY c.TIMESTAMP
+    """
+    return session.sql(query).to_pandas()
 
 # ---------------------------
 # Sidebar: filters
@@ -136,7 +152,7 @@ if df_filtered.empty:
     df_filtered = df.copy()
 
 # ---------------------------
-# Summary KPIs (cleaner header & spacing)
+# Summary KPIs (clean header & spacing)
 # ---------------------------
 
 if selected_time == "All times":
@@ -145,9 +161,10 @@ else:
     subtitle = f"{selected_date.strftime('%Y-%m-%d')} · {selected_time}"
 
 st.subheader(f"Summary · {subtitle}")
+st.markdown("")
 
-c1, c2, c3 = st.columns(3)
-c4, c5 = st.columns(2)
+row1 = st.columns(4)
+row2 = st.columns(2)
 
 avg_wave = df_filtered["wave_height"].mean()
 max_wave = df_filtered["wave_height"].max()
@@ -155,55 +172,172 @@ avg_wind = df_filtered["wind_speed"].mean()
 avg_swell = df_filtered["swell_height"].mean()
 danger_records = int((df_filtered["wave_height"] > danger_threshold).sum())
 
-c1.metric("🌊 Avg Wave (m)", f"{avg_wave:.2f}")
-c2.metric("🌊 Max Wave (m)", f"{max_wave:.2f}")
-c3.metric("🌬️ Avg Wind (m/s)", f"{avg_wind:.2f}")
-c4.metric("🌊 Avg Swell (m)", f"{avg_swell:.2f}")
-c5.metric("⚠️ Dangerous Records", danger_records)
+row1[0].metric("Avg Wave (m)", f"{avg_wave:.2f}")
+row1[1].metric("Max Wave (m)", f"{max_wave:.2f}")
+row1[2].metric("Avg Wind (m/s)", f"{avg_wind:.2f}")
+row1[3].metric("Avg Swell (m)", f"{avg_swell:.2f}")
 
-st.markdown("")  # small spacing
+row2[0].metric("Dangerous Records", danger_records)
+row2[1].markdown(f"**Danger threshold:** {danger_threshold:.1f} m")
+
 st.markdown("---")
 
 # ---------------------------
-# Dangerous wave map (visually clearer)
+# Map + Wave Height Meter (side by side)
 # ---------------------------
 
-st.subheader("📍 Wave Map (Colored by Wave Height)")
+st.subheader("📍 Wave Map & Wave Height Meter")
 
-df_map = df_filtered.copy()
-df_map["danger"] = df_map["wave_height"] > danger_threshold
-df_map["danger_label"] = df_map["danger"].map({True: "Dangerous", False: "Safe"})
+map_col, gauge_col = st.columns([2, 1])
 
-# If you have many points at the same location you’ll see one bubble,
-# but color & size show how big the waves are.
-fig_map = px.scatter_mapbox(
-    df_map,
-    lat="lat",
-    lon="lon",
-    color="wave_height",           # continuous color by wave height
-    size="wave_height",            # bubble size by wave height
-    hover_name="timestamp",
-    hover_data={
-        "wave_height": True,
-        "swell_height": True,
-        "wind_speed": True,
-        "water_temperature": True,
-        "lat": False,
-        "lon": False,
-    },
-    zoom=9,
-    height=400,
-)
+# ---- Simple map in left column (st.map) ----
+with map_col:
+    df_map = df_filtered.copy()
+    df_map["danger"] = df_map["wave_height"] > danger_threshold
 
-fig_map.update_layout(
-    mapbox_style="open-street-map",
-    mapbox_center={"lat": float(df_map["lat"].iloc[0]),
-                   "lon": float(df_map["lon"].iloc[0])},
-    margin={"r": 0, "t": 0, "l": 0, "b": 0},
-    coloraxis_colorbar_title="Wave (m)",
-)
+    # st.map expects columns named lat / lon
+    map_points = df_map[["lat", "lon"]].dropna()
 
-st.plotly_chart(fig_map, use_container_width=True)
+    if not map_points.empty:
+        st.map(map_points, zoom=10, use_container_width=True)
+    else:
+        st.info("No latitude/longitude available to plot on the map.")
+
+    num_safe = int((~df_map["danger"]).sum())
+    num_danger = int(df_map["danger"].sum())
+    st.caption(
+        f"Safe records: {num_safe} · Dangerous records (> {danger_threshold:.1f} m): {num_danger}"
+    )
+
+# ---- Wave height meter in right column ----
+with gauge_col:
+    st.markdown("**Daily Wave Height Meter**")
+
+    gauge_max = max(max_wave, danger_threshold) * 1.3 if max_wave > 0 else danger_threshold * 1.5
+
+    fig_gauge = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=max_wave,
+            title={"text": "Max Wave (m)"},
+            gauge={
+                "axis": {"range": [0, gauge_max]},
+                "steps": [
+                    {"range": [0, danger_threshold], "color": "#b7e4c7"},     # safe
+                    {"range": [danger_threshold, gauge_max], "color": "#ffccd5"},  # danger
+                ],
+                "threshold": {
+                    "line": {"color": "red", "width": 4},
+                    "thickness": 0.8,
+                    "value": danger_threshold,
+                },
+            },
+        )
+    )
+
+    fig_gauge.update_layout(margin=dict(l=10, r=10, t=40, b=10))
+    st.plotly_chart(fig_gauge, use_container_width=True)
+    st.caption("Green = below danger threshold. Red = high-risk wave heights.")
+
+st.markdown("---")
+
+# ---------------------------
+# Forecasting Section
+# ---------------------------
+
+st.subheader("🔮 Wave Height Forecast (Next 24 Hours)")
+
+hist_df = load_recent_history(days=3)
+
+if hist_df.empty:
+    st.info("Not enough history in STORM_MARINE_CLEAN to build a forecast yet.")
+else:
+    hist_df["timestamp"] = pd.to_datetime(hist_df["TIMESTAMP"])
+    hist_df["wave_height"] = hist_df["WAVE_HEIGHT"]
+
+    # Resample to hourly and fill gaps
+    ts = (
+        hist_df.set_index("timestamp")["wave_height"]
+        .resample("H")
+        .mean()
+        .interpolate()
+    )
+
+    if len(ts) < 10:
+        st.info("Need more than 10 hourly points to forecast. Ingest more data.")
+    else:
+        # Simple linear trend forecast using numpy.polyfit
+        base_time = ts.index[0]
+        t_hist = (ts.index - base_time).total_seconds() / 3600.0  # hours since start
+        y_hist = ts.values
+
+        coeffs = np.polyfit(t_hist, y_hist, deg=1)  # linear trend
+        trend_hist = np.polyval(coeffs, t_hist)
+        residuals = y_hist - trend_hist
+        sigma = np.std(residuals)
+
+        # Forecast next 24 hours – start exactly at last history point
+        horizon_hours = 24
+        last_t = t_hist[-1]
+        future_t = np.arange(last_t, last_t + horizon_hours + 1)  # includes last_t
+        future_index = [
+            ts.index[-1] + pd.Timedelta(hours=i)
+            for i in range(0, horizon_hours + 1)
+        ]
+        forecast_values = np.polyval(coeffs, future_t)
+
+        upper = forecast_values + 1.96 * sigma
+        lower = np.clip(forecast_values - 1.96 * sigma, 0, None)
+
+        fig_forecast = go.Figure()
+
+        # History
+        fig_forecast.add_trace(
+            go.Scatter(
+                x=ts.index,
+                y=ts.values,
+                mode="lines",
+                name="History",
+                line=dict(color="#1f77b4"),
+            )
+        )
+
+        # Forecast line
+        fig_forecast.add_trace(
+            go.Scatter(
+                x=future_index,
+                y=forecast_values,
+                mode="lines",
+                name="Forecast",
+                line=dict(color="#ff7f0e", dash="solid"),
+            )
+        )
+
+        # Confidence band (forecast region only)
+        fig_forecast.add_trace(
+            go.Scatter(
+                x=future_index + future_index[::-1],
+                y=list(upper) + list(lower[::-1]),
+                fill="toself",
+                name="95% CI (Forecast)",
+                opacity=0.2,
+                line=dict(width=0),
+                showlegend=True,
+            )
+        )
+
+        fig_forecast.update_layout(
+            title="Wave Height Forecast (Next 24 Hours)",
+            xaxis_title="Time (UTC)",
+            yaxis_title="Wave Height (m)",
+            margin=dict(l=10, r=10, t=40, b=10),
+        )
+
+        st.plotly_chart(fig_forecast, use_container_width=True)
+        st.caption(
+            "History (blue) and 24-hour linear trend forecast (orange). "
+            "Shaded area shows an approximate 95% confidence band for the forecast region."
+        )
 
 st.markdown("---")
 
